@@ -4,7 +4,7 @@ Target IP: 10.10.14.139
 
 My IP: 10.129.145.199
 
-## Reconassense and Vulnerability Scanning
+## Reconassense and Vulnerability Assessment
 
 ### Port Scanning with NMAP
 
@@ -51,7 +51,7 @@ PORT   STATE SERVICE VERSION
 
 ```
 
-Observe the open ports: 22,80
+Observe the open ports: **22,80**
 
 * 22 is SSH running version OpenSSH 8.4p1 which doesn't appear to be vulnerable
 * 80 is HTTP. One of the default NMAP scripts for port 80 found an **exposed Git repository!**
@@ -71,7 +71,7 @@ We can either:
 1. Fuzz the file uploader for a file upload vulnerability
 2. Check the exposed Git repository for clues
 
-If we can find the source code, it may assist us in finding a file upload vulnerability. 
+If we can find the source code within the Git repo, it may assist us in finding a file upload vulnerability. 
 
 
 We visit the repo diectly @ http://pilgrimage.htb/.git but its forbidden. However, if we attempt to visit http://pilgrimage.htb/.git/config/ we can view the Git configuration file. That's interesting.
@@ -122,31 +122,27 @@ Note: Rust is required to run this exploit - install with: `curl https://sh.rust
 
 Use the steps above as a guide to complete the exploit
 
-Using iPython3, save the hex to a string.
+Using iPython3, save the hex to a string then decode the hex bytes to an ascii string.
 
-![output-str.png](output-str.png)
+![passwd.png](passwd.png)
 
-Then decode the hex bytes to ascii string.
-
-~[passwd.png](passwd.png)
-
-Ok, so we've effectively mastered the roundhouse kick; now we need to figure out where to deliver the kick. 
+Ok, so if this exploit was the roundhouse kick; we've mastered it. Now, we need to figure out where to deliver the kick. 
 
 Notice the user accounts in `/etc/passwd` file we read from the server. There exsists a user `emily` whose home directory is `/home/emily`. I wonder if we can steal emily's private ssh key
 
 We repeat the steps above with the payload `./cargo run "/home/emily/.ssh/id_rsa"` with no luck. Lets comb the Git repo for interesting files to read. 
 
-![login.png](login.png)
+### Another Angle: the Database
 
-Notice the login functionality from login.php: it uses SQLite with a prepared SQL statement. The interesting thing is the database file is located at `/var/db/pilgrimage`. Lets try to read it. 
+Notice the login functionality from login.php: it uses SQLite with a prepared SQL statement. The line that catches the eye is the database file is located at `/var/db/pilgrimage`. Lets try to read it. 
 
-Use payload: `./cargo run "/var/db/pilgrimage"`
+Now, deliver the roundhouse kick to the database! Use payload: `./cargo run "/var/db/pilgrimage"`
 
 ![db.png](db.png)
 
 We have the entire db!
 
-Now parse through the null bytes and decode the plain text. Eventually we come acress: 
+Parse through the null bytes and decode the plain text. Eventually we come acress: 
 
 ![fromhex.png](fromhex.png)
 
@@ -176,7 +172,7 @@ The scirpt calls the binary `binwalk`. When we execute the binary, it tells us i
 
 A Google search leads us to exploit-db.com where [we find a PoC for a remote code execution using Binwalk v2.3.2.](https://www.exploit-db.com/exploits/51249)
 
-It looks like the exploit writes a reverse shell to a .png file. Lets do it. 
+It looks like the exploit writes a reverse shell to a .png file that Binwalk is vulnerable to.  
 
 ![exp.png](exp.png)
 
@@ -187,6 +183,44 @@ Start a listener for the reverse shell to connect back to.
 Now start an http server on your machine and download the binwalk_exploit.png file created earlier. Wait a minute or two and keep an eye on your listener...
 
 ![whoami.png](whoami.png)
+
+# System Hardening
+
+If we were responsible for this system? What steps could we take to ensure this doesn't happen again?
+
+### Hide or deny access to the exposed Git repository
+
+
+### Upgrade ImageMagick
+
+
+### Move SQLDatabase to another machine or Docker Image
+
+
+### Notify users to avoid password reuse
+Once we were able to read the SQLite database file, we found the credentials: `emily:XXXXXXxx`. These were their web appication login credentials, but were the same for system   
+
+
+
+### Run MalwareScan with user permissions (emily), NOT root 
+
+
+
+### Upgrade Binwalk 
+
+
+
+
+### Upgrade Basket to the latest version
+If this was the only vulnerability on the machine, the impact would not be so extreme. However, the fact that this moderately impactful SSRF vulnerability gives us access to an application where we can execute arbitrary commands makes this a **critical** problem.
+* Read about [SSRF on the OWASP Top 10 list](https://owasp.org/API-Security/editions/2023/en/0xa7-server-side-request-forgery/)
+
+### Upgrade Maltrail to the latest version
+This is a critical vulnerability. Arbitrary command injection is dangerous, as an attacker can transfer file to or from, execte a shell on, or read files from a victim.
+* Read about [command injection](https://owasp.org/www-community/attacks/Command_Injection)
+
+### Remove 'puma' user's passwordless sudo
+Executing sudo without a user's password is risky. If an attacker steals the sudoers ssh key, executes a reverse on a program they're running, or finds themselves a a terminal left unlocked, they can run the program as sudo. However, if entering the user's password is required prior to execution, that is one more layer of security that would have prevented this privledge escalation. 
 
 
 
