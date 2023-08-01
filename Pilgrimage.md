@@ -189,38 +189,30 @@ Now start an http server on your machine and download the binwalk_exploit.png fi
 If we were responsible for this system? What steps could we take to ensure this doesn't happen again?
 
 ### Hide or deny access to the exposed Git repository
-
+An exposed Git repository allows an attacker to leak source code where additional vulnerabilities may be found. 
+* [Read about risks and how to migitage exposed Git repositories](https://iosentrix.com/blog/git-source-code-disclosure-vulnerability/) 
 
 ### Upgrade ImageMagick
+ImageMagick 7.1.0-49 is vulnerablity to arbitrary file read. This is a moderately severe vulnerability. A newer version of ImageMagick is available and should be upgraded as soon as possible.
 
 
-### Move SQLDatabase to another machine or Docker Image
+### Create a DMZ between SQLDatabase and web server
+A web server should be seperate from its database. Given the ImageMagick vulnerability, if I can read any file on the server, and the database is located on the server, then I can read the database. Move the server to a seperate machine or Docker container to compartmentalize key peices of your network. 
+* [Read about creating a DMZ network](https://www.techtarget.com/searchsecurity/definition/DMZ?Offer=abt_pubpro_AI-Insider)
 
 
 ### Notify users to avoid password reuse
-Once we were able to read the SQLite database file, we found the credentials: `emily:XXXXXXxx`. These were their web appication login credentials, but were the same for system   
-
-
+Once we were able to read the SQLite database file, we found the credentials: `emily:abigchonkyboi123`. These were their web appication login credentials. However, when we attempted to SSH into the web server, these credentials gave us access to the emily account. 
+* [Read about the risks of reusing passwords](https://www.dashlane.com/blog/how-password-reuse-leads-to-vulnerabilities)
 
 ### Run MalwareScan with user permissions (emily), NOT root 
-
-
+The MalwareScan script was exeucting with root permissions. This is not in accordance with best practices, as software should run with the least priviledge nessessary to fulfill its task.
+* [Read about the Principle of Least Priviledge](https://www.paloaltonetworks.com/cyberpedia/what-is-the-principle-of-least-privilege#:~:text=The%20principle%20of%20least%20privilege%20(PoLP)%20is%20an%20information%20security,to%20complete%20a%20required%20task.)
 
 ### Upgrade Binwalk 
+Binwalk v2.3.2 is vulnerable to remote code execution. This is a **critical** vulnerability and upgrading to Binwalk v2.3.3+ should be done **immediately**
+* [Read about remote code execution](https://www.crowdstrike.com/cybersecurity-101/remote-code-execution-rce/)
 
-
-
-
-### Upgrade Basket to the latest version
-If this was the only vulnerability on the machine, the impact would not be so extreme. However, the fact that this moderately impactful SSRF vulnerability gives us access to an application where we can execute arbitrary commands makes this a **critical** problem.
-* Read about [SSRF on the OWASP Top 10 list](https://owasp.org/API-Security/editions/2023/en/0xa7-server-side-request-forgery/)
-
-### Upgrade Maltrail to the latest version
-This is a critical vulnerability. Arbitrary command injection is dangerous, as an attacker can transfer file to or from, execte a shell on, or read files from a victim.
-* Read about [command injection](https://owasp.org/www-community/attacks/Command_Injection)
-
-### Remove 'puma' user's passwordless sudo
-Executing sudo without a user's password is risky. If an attacker steals the sudoers ssh key, executes a reverse on a program they're running, or finds themselves a a terminal left unlocked, they can run the program as sudo. However, if entering the user's password is required prior to execution, that is one more layer of security that would have prevented this privledge escalation. 
 
 
 
