@@ -10,7 +10,7 @@ My IP: 10.129.145.199
 
 ### Port Scanning with NMAP
 
-Add the machine IP address to your /etc/hosts and set domain name to `pilgrimage.htb`
+Add the machine IP address to your /etc/hosts and set domain name to `pilgrimage.htb`.
 
 Let's start our assessment with an NMAP scan of the target.
 
@@ -119,7 +119,7 @@ The PoC provides steps on how to exploit ImageMagick.
 
 Note: Rust is required to run this exploit - install with: `curl https://sh.rustup.rs -sSf | sh`
 
-Use the steps above as a guide to complete the exploit
+Use the steps above as a guide to complete the exploit.
 
 Using iPython3, save the hex to a string then decode the hex bytes to an ascii string.
 
@@ -209,7 +209,7 @@ The MalwareScan script was executed with root permissions. This is not consisten
 * [Read about the Principle Privilege Least Priviledge](https://www.paloaltonetworks.com/cyberpedia/what-is-the-principle-of-least-privilege#:~:text=The%20principle%20of%20least%20privilege%20(PoLP)%20is%20an%20information%20security,to%20complete%20a%20required%20task.)
 
 ### Upgrade Binwalk 
-Binwalk v2.3.2 is vulnerable to remote code execution. This is a **critical** vulnerability and upgrading to Binwalk v2.3.3+ should be done **immediately**
+Binwalk v2.3.2 is vulnerable to remote code execution. This is a **critical** vulnerability and upgrading to Binwalk v2.3.3+ should be done **immediately**.
 * [Read about remote code execution](https://www.crowdstrike.com/cybersecurity-101/remote-code-execution-rce/)
 
 
