@@ -1,5 +1,7 @@
 # HTB Machine: Pilgrimage
 
+![thumb.png](thumb.png)
+
 Target IP: 10.10.14.139
 
 My IP: 10.129.145.199
