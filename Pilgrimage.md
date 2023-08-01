@@ -193,7 +193,7 @@ An exposed Git repository allows an attacker to leak source code where additiona
 * [Read about risks and how to migitage exposed Git repositories](https://iosentrix.com/blog/git-source-code-disclosure-vulnerability/) 
 
 ### Upgrade ImageMagick
-ImageMagick 7.1.0-49 is vulnerablity to arbitrary file read. This is a moderately severe vulnerability. A newer version of ImageMagick is available and should be upgraded as soon as possible.
+ImageMagick 7.1.0-49 is vulnerablity to arbitrary file read. This is a high severity vulnerability. A newer version of ImageMagick is available and should be upgraded as soon as possible.
 
 
 ### Create a DMZ between SQLDatabase and web server
