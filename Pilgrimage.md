@@ -12,7 +12,7 @@ My IP: 10.129.145.199
 
 Add the machine IP address to your /etc/hosts and set domain name to `pilgrimage.htb`
 
-Lets start our assessment with an NMAP scan of the target.
+Let's start our assessment with an NMAP scan of the target.
 
 ```
 sudo nmap pilgrimage.htb -O -sCV -A > nmap.txt
@@ -60,11 +60,11 @@ Observe the open ports: **22,80**
 
 This is the **first vulnerability** of the day! 
 
-Before we start poking around the git repoistory, lets get a feel for the web app itself.
+Before we start poking around the git repository, let's get a feel for the web app itself.
 
 ![landing.png](landing.png)
 
-We're greated with a file upload to an image shrinker form. Create an account. The user page after login is a dashboard containing all shrunken image links.  
+We're greeted with a file upload to an image shrinker form. Create an account. The user page after login is a dashboard containing all shrunken image links.  
 
 
 ### We Have Two Options
@@ -76,10 +76,10 @@ We can either:
 If we can find the source code within the Git repo, it may assist us in finding a file upload vulnerability. 
 
 
-We visit the repo diectly @ http://pilgrimage.htb/.git but its forbidden. However, if we attempt to visit http://pilgrimage.htb/.git/config/ we can view the Git configuration file. That's interesting.
+We visit the repo directly @ http://pilgrimage.htb/.git but it's forbidden. However, if we attempt to visit http://pilgrimage.htb/.git/config/ we can view the Git configuration file. That's interesting.
 
 
-Searching for some methods to exploiting an exposed Git repository, [we come across this article](https://blog.pentesteracademy.com/mining-exposed-git-directory-in-3-simple-steps-b6cfaf80b89b). The first method in the article uses git-dumper. It'll basically clone the Git repo. Here's [a Github page detailing git-dumper and its usae cases.](https://github.com/arthaud/git-dumper).
+Searching for some methods to exploiting an exposed Git repository, [we come across this article](https://blog.pentesteracademy.com/mining-exposed-git-directory-in-3-simple-steps-b6cfaf80b89b). The first method in the article uses git-dumper. It'll basically clone the Git repo. Here's [a Github page detailing git-dumper and its usage cases.](https://github.com/arthaud/git-dumper).
 
 Lets use this tool to dump the Git repo:
 1. `pip install git-dumper`
@@ -100,7 +100,7 @@ We see the magick binary is actually ImageMagick 7.1.0-49.
 
 ![magick-v.png](magick-v.png)
 
-Googling it for known CVEs/vulnerabilies and we come across [this article detailing a vulnerability discovery](https://www.metabaseq.com/imagemagick-zero-days/) as well as [this Github exploit proof of concept (PoC).](https://github.com/voidz0r/CVE-2022-44268).
+Googling it for known CVEs/vulnerabilities and we come across [this article detailing a vulnerability discovery](https://www.metabaseq.com/imagemagick-zero-days/) as well as [this Github exploit proof of concept (PoC).](https://github.com/voidz0r/CVE-2022-44268).
 
 About ImageMagick 7.1.0-49 vulnerability:
 * This version of ImageMagick is vulnerable to arbitrary file read. Meaning we can read most (or all) files on the server
@@ -114,7 +114,7 @@ The PoC provides steps on how to exploit ImageMagick.
 2. change directories to the cloned folder then execute `cargo run "/desired/file`
 3. Upload to shrinker website
 4. Download resized image
-5. execute 'identify -verbose filename-here.png'
+5. execute shell command `identify -verbose downloaded-image.png`
 6. Convert hex of the resized image body to ascii 
 
 Note: Rust is required to run this exploit - install with: `curl https://sh.rustup.rs -sSf | sh`
@@ -127,13 +127,13 @@ Using iPython3, save the hex to a string then decode the hex bytes to an ascii s
 
 Ok, so if this exploit was the roundhouse kick; we've mastered it. Now, we need to figure out where to deliver the kick. 
 
-Notice the user accounts in `/etc/passwd` file we read from the server. There exsists a user `emily` whose home directory is `/home/emily`. I wonder if we can steal emily's private ssh key
+Notice the user accounts in the `/etc/passwd` file we read from the server. There exists a user `emily` whose home directory is `/home/emily`. I wonder if we can steal emily's private ssh key
 
-We repeat the steps above with the payload `./cargo run "/home/emily/.ssh/id_rsa"` with no luck. Lets comb the Git repo for interesting files to read. 
+We repeat the steps above with the payload `./cargo run" "/home/emily/.ssh/id_rsa"` with no luck. Lets comb the Git repo for interesting files to read. 
 
 ### Another Angle: the Database
 
-Notice the login functionality from login.php: it uses SQLite with a prepared SQL statement. The line that catches the eye is the database file is located at `/var/db/pilgrimage`. Lets try to read it. 
+Notice the login functionality from login.php: it uses SQLite with a prepared SQL statement. The line that catches the eye is the database file is located at `/var/db/pilgrimage`. Let's try to read it. 
 
 Now, deliver the roundhouse kick to the database! Use payload: `./cargo run "/var/db/pilgrimage"`
 
@@ -141,7 +141,7 @@ Now, deliver the roundhouse kick to the database! Use payload: `./cargo run "/va
 
 We have the entire db!
 
-Parse through the null bytes and decode the plain text. Eventually we come acress: 
+Parse the null bytes and decode the plain text. Eventually we come across: 
 
 ![fromhex.png](fromhex.png)
 
@@ -153,19 +153,19 @@ Those appear to be emily's credentials. Try to ssh into her account.
 ![ssh.png](ssh.png)
 
 
-### Priveledge Escalation 
+### Privilege Escalation 
 
-Now that we PWNd user, we need to PWN root. 
+Now that we are PWNd user, we need to PWN root. 
 
 After searching the system for abnormalities, we come across one when we list current processes: `ps -aux`
  
 ![psaux.png](psaux.png)
 
-Root is currently runnning a script called malwarescan.sh in `/usr/sbin/`. Lets check it out. 
+Root is currently running a script called malwarescan.sh in `/usr/sbin/`. Let's check it out. 
 
 ![binwalk.png](binwalk.png)
 
-The scirpt calls the binary `binwalk`. When we execute the binary, it tells us it's `Binwalk v2.3.2` 
+The script calls the binary `binwalk`. When we execute the binary, it tells us it's `Binwalk v2.3.2` 
 
 ![binwalk-v.png](binwalk-v.png)
 
@@ -189,31 +189,28 @@ If we were responsible for this system? What steps could we take to ensure this 
 
 ### Hide or deny access to the exposed Git repository
 An exposed Git repository allows an attacker to leak source code where additional vulnerabilities may be found. 
-* [Read about risks and how to migitage exposed Git repositories](https://iosentrix.com/blog/git-source-code-disclosure-vulnerability/) 
+* [Read about risks and how to mitigate exposed Git repositories](https://iosentrix.com/blog/git-source-code-disclosure-vulnerability/) 
 
 ### Upgrade ImageMagick
-ImageMagick 7.1.0-49 is vulnerablity to arbitrary file read. This is a high severity vulnerability. A newer version of ImageMagick is available and should be upgraded as soon as possible.
+ImageMagick 7.1.0-49 is vulnerable to arbitrary file read. This is a high severity vulnerability. A newer version of ImageMagick is available and should be updated asap.
 
 
 ### Create a DMZ between SQLDatabase and web server
-A web server should be seperate from its database. Given the ImageMagick vulnerability, if I can read any file on the server, and the database is located on the server, then I can read the database. Move the server to a seperate machine or Docker container to compartmentalize key peices of your network. 
+A web server should be separated from its database. Given the ImageMagick vulnerability, if I can read any file on the server, and the database is located on the server, then I can read the database. Move the server to a separate machine or Docker container to compartmentalize key pieces of your network. 
 * [Read about creating a DMZ network](https://www.techtarget.com/searchsecurity/definition/DMZ?Offer=abt_pubpro_AI-Insider)
 
 
 ### Notify users to avoid password reuse
-Once we were able to read the SQLite database file, we found the credentials: `emily:abigchonkyboi123`. These were their web appication login credentials. However, when we attempted to SSH into the web server, these credentials gave us access to the emily account. 
+Once we were able to read the SQLite database file, we found the credentials: `emily:abigchonkyboi123`. These were their web application login credentials. However, when we attempted to SSH into the web server, these credentials gave us access to the emily account. 
 * [Read about the risks of reusing passwords](https://www.dashlane.com/blog/how-password-reuse-leads-to-vulnerabilities)
 
 ### Run MalwareScan with user permissions (emily), NOT root 
-The MalwareScan script was exeucting with root permissions. This is not in accordance with best practices, as software should run with the least priviledge nessessary to fulfill its task.
-* [Read about the Principle of Least Priviledge](https://www.paloaltonetworks.com/cyberpedia/what-is-the-principle-of-least-privilege#:~:text=The%20principle%20of%20least%20privilege%20(PoLP)%20is%20an%20information%20security,to%20complete%20a%20required%20task.)
+The MalwareScan script was executed with root permissions. This is not consistent with best practices. Software should run with the least privilege necessary to fulfill its task.
+* [Read about the Principle Privilege Least Priviledge](https://www.paloaltonetworks.com/cyberpedia/what-is-the-principle-of-least-privilege#:~:text=The%20principle%20of%20least%20privilege%20(PoLP)%20is%20an%20information%20security,to%20complete%20a%20required%20task.)
 
 ### Upgrade Binwalk 
 Binwalk v2.3.2 is vulnerable to remote code execution. This is a **critical** vulnerability and upgrading to Binwalk v2.3.3+ should be done **immediately**
 * [Read about remote code execution](https://www.crowdstrike.com/cybersecurity-101/remote-code-execution-rce/)
-
-
-
 
 
 
