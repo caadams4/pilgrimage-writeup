@@ -79,10 +79,7 @@ If we can find the source code within the Git repo, it may assist us in finding 
 We visit the repo diectly @ http://pilgrimage.htb/.git but its forbidden. However, if we attempt to visit http://pilgrimage.htb/.git/config/ we can view the Git configuration file. That's interesting.
 
 
-Searching for some methods to exploiting an exposed Git repository, [we come across this article](https://blog.pentesteracademy.com/mining-exposed-git-directory-in-3-simple-steps-b6cfaf80b89b)
-
-
-The first method in the article uses git-dumper. It'll basically clone the Git repo. Here's [a Github page detailing git-dumper and its usae cases.](https://github.com/arthaud/git-dumper).
+Searching for some methods to exploiting an exposed Git repository, [we come across this article](https://blog.pentesteracademy.com/mining-exposed-git-directory-in-3-simple-steps-b6cfaf80b89b). The first method in the article uses git-dumper. It'll basically clone the Git repo. Here's [a Github page detailing git-dumper and its usae cases.](https://github.com/arthaud/git-dumper).
 
 Lets use this tool to dump the Git repo:
 1. `pip install git-dumper`
@@ -97,7 +94,7 @@ Combing through the PHP files, we come across something interesting:
 
 ![magick-exec.png](magick-exec.png)
 
-index.php executes our uploaded file with the `magick` binary in the dumper Git repo. 
+index.php executes our uploaded file with the `magick` binary in the dumped Git repo. 
 
 We see the magick binary is actually ImageMagick 7.1.0-49. 
 
